@@ -70,6 +70,46 @@ namespace clover {
 		}
 	};
 
+    using tbb_partitioner = tbb::auto_partitioner;
+    static tbb_partitioner partitioner{};
+
+    template<typename F>
+	static constexpr void par_ranged1(const Range1d &r, const F &functor) {
+
+        tbb::parallel_for(
+                tbb::blocked_range<size_t>{r.from, r.to}, [&](const tbb::blocked_range<size_t> &r) {
+                    for (size_t i = r.begin(); i < r.end(); ++i) {
+                        functor(i);
+                    }
+                }, partitioner);
+//
+//		for (size_t i = r.from; i < r.to; i++) {
+//			functor(i);
+//		}
+	}
+
+	template<typename F>
+	static constexpr void par_ranged2(const Range2d &r, const F &functor) {
+
+
+        tbb::parallel_for(
+                tbb::blocked_range2d<size_t>{r.fromY, r.toY, r.fromX, r.toX},
+                [&](const tbb::blocked_range2d<size_t> &br) {
+                    for (size_t j = br.rows().begin(); j < br.rows().end(); ++j) {
+                        for (size_t i = br.cols().begin(); i < br.cols().end(); ++i) {
+                            functor(i, j);
+                        }
+                    }
+
+                }, partitioner);
+
+//        for (size_t j = r.fromY; j < r.toY; j++) {
+//            for (size_t i = r.fromX; i < r.toX; i++) {
+//                functor(i, j);
+//            }
+//        }
+	}
+
 #ifdef USE_VECTOR
 
     template<typename T>
@@ -117,7 +157,9 @@ namespace clover {
         T *data;
 
         explicit Buffer1D(size_t size) : size(size), data(static_cast<T *>(std::malloc(sizeof(T) * size))) {}
-        Buffer1D(const Buffer1D &that) : Buffer1D(that.size) { std::copy(that.data, that.data + size, data);  }
+        Buffer1D(const Buffer1D &that) : Buffer1D(that.size) { 
+            par_ranged1({0, size}, [&](auto i){ data[i] = that.data[i]; });
+        }
         Buffer1D &operator=(const Buffer1D &other) = delete;
         T operator[](size_t i) const { return data[i]; }
         T &operator[](size_t i) { return data[i]; }
@@ -138,7 +180,9 @@ namespace clover {
         T *data;
 
         Buffer2D(size_t sizeX, size_t sizeY) : sizeX(sizeX), sizeY(sizeY),  data(static_cast<T *>(std::malloc(sizeof(T) * sizeX * sizeY))) {}
-        Buffer2D(const Buffer2D &that) : Buffer2D(that.sizeX, that.sizeY) { std::copy(that.data, that.data + sizeX * sizeY, data); }
+        Buffer2D(const Buffer2D &that) : Buffer2D(that.sizeX, that.sizeY) { 
+            par_ranged2({0, 0, sizeX, sizeY}, [&](auto i, auto j){ data[i + j * sizeX] = that.data[i + j * sizeX]; });
+        }
         Buffer2D &operator=(const Buffer2D &other) = delete;
         T &operator()(size_t i, size_t j) { return data[i + j * sizeX]; }
         T const &operator()(size_t i, size_t j) const { return data[i + j * sizeX]; }
@@ -152,46 +196,6 @@ namespace clover {
     };
 
 #endif
-
-    using tbb_partitioner = tbb::auto_partitioner;
-    static tbb_partitioner partitioner{};
-
-    template<typename F>
-	static constexpr void par_ranged1(const Range1d &r, const F &functor) {
-
-        tbb::parallel_for(
-                tbb::blocked_range<size_t>{r.from, r.to}, [&](const tbb::blocked_range<size_t> &r) {
-                    for (size_t i = r.begin(); i < r.end(); ++i) {
-                        functor(i);
-                    }
-                }, partitioner);
-//
-//		for (size_t i = r.from; i < r.to; i++) {
-//			functor(i);
-//		}
-	}
-
-	template<typename F>
-	static constexpr void par_ranged2(const Range2d &r, const F &functor) {
-
-
-        tbb::parallel_for(
-                tbb::blocked_range2d<size_t>{r.fromY, r.toY, r.fromX, r.toX},
-                [&](const tbb::blocked_range2d<size_t> &br) {
-                    for (size_t j = br.rows().begin(); j < br.rows().end(); ++j) {
-                        for (size_t i = br.cols().begin(); i < br.cols().end(); ++i) {
-                            functor(i, j);
-                        }
-                    }
-
-                }, partitioner);
-
-//        for (size_t j = r.fromY; j < r.toY; j++) {
-//            for (size_t i = r.fromX; i < r.toX; i++) {
-//                functor(i, j);
-//            }
-//        }
-	}
 
 
 }
