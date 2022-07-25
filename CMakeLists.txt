@@ -74,7 +74,6 @@ add_executable(clover_leaf ${SOURCES})
 
 target_include_directories(clover_leaf PUBLIC src)
 
-set(USE_VECTOR ON)
 if (USE_VECTOR)
     target_compile_definitions(clover_leaf PUBLIC USE_VECTOR)
 endif ()
