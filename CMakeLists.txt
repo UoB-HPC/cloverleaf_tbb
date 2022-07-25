@@ -97,7 +97,7 @@ target_include_directories(clover_leaf PUBLIC BEFORE ${TBB_SOURCE_DIR})
 set(DEBUG_OPTIONS -O2 -fsanitize=address -fno-omit-frame-pointer -g3 ${OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
 set(RELEASE_OPTIONS -O3 -march=native -mtune=native ${OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
 
-target_link_libraries(clover_leaf PUBLIC asan ${MPI_C_LIB} TBB::tbb)
+target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB} TBB::tbb)
 #target_link_libraries(clover_leaf PUBLIC OpenMP::OpenMP_CXX OpenMP::OpenMP_C)
 
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
