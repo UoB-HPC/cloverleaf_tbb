@@ -11,7 +11,13 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/oneapi-src/oneTBB.git
         GIT_TAG faaf43c4ab22cb4b4267d65d5e218fa58800eea8
 )
-FetchContent_MakeAvailable(TBB)
+
+# Not using FetchContent_MakeAvailable because we need EXCLUDE_FROM_ALL
+FetchContent_GetProperties(TBB)
+if (NOT TBB_POPULATED)
+    FetchContent_Populate(TBB)
+    add_subdirectory(${tbb_SOURCE_DIR} ${tbb_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif ()
 
 
 if (MPI_AS_LIBRARY)
@@ -93,8 +99,8 @@ target_compile_options(clover_leaf
 
 target_include_directories(clover_leaf PUBLIC BEFORE ${TBB_SOURCE_DIR})
 
-set(DEBUG_OPTIONS -O2 -fsanitize=address -fno-omit-frame-pointer -g3 ${OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
-set(RELEASE_OPTIONS -O3 -march=native -mtune=native ${OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
+set(DEBUG_OPTIONS -O2 ${CXX_EXTRA_FLAGS})
+set(RELEASE_OPTIONS -O3 ${CXX_EXTRA_FLAGS})
 
 target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB} TBB::tbb)
 #target_link_libraries(clover_leaf PUBLIC OpenMP::OpenMP_CXX OpenMP::OpenMP_C)
@@ -103,7 +109,5 @@ target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
 
-
-target_link_options(clover_leaf PUBLIC ${OpenMP_CXX_FLAGS} ${OFFLOAD_FLAGS})
 target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
 
