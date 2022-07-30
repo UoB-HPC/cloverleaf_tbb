@@ -97,7 +97,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int xmin = t.info.t_xmin;
 		field_type &field = t.field;
 
-        clover::Range2d r(xmin + 1, ymin + 1, xmax, ymax);
+        clover::Range2d r(xmin + 1, ymin + 1, xmax + 2, ymax + 2);
         s = tbb::parallel_reduce(
                 tbb::blocked_range2d<size_t>{r.fromY, r.toY, r.fromX, r.toX}, summary{},
                 [&](const tbb::blocked_range2d<size_t> &br, summary acc) {
